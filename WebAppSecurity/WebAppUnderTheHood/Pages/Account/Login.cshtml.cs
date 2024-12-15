@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using WebAppUnderTheHood.AuthenticationModel;
 
 namespace WebAppUnderTheHood.Pages.Account
 {
@@ -17,20 +17,25 @@ namespace WebAppUnderTheHood.Pages.Account
         {
             if (!ModelState.IsValid) return Page();
 
-            bool areCredentialsOk = (Credential.Name == "alex" || Credential.Name == "seb") && Credential.Password == "123";
+            bool areCredentialsOk = (new string[] {"alex", "seb", "bob", "john"}).Contains(Credential.Name) && Credential.Password == "123";
             if (!areCredentialsOk) return Page();
 
-            List<Claim> claims = getClaims(Credential.Name);
+            List<Claim> claims = GetClaims(Credential.Name);
 
             ClaimsIdentity identity = new(claims, CookieAuth);
             ClaimsPrincipal principal = new(identity);
 
-            await HttpContext.SignInAsync(CookieAuth, principal);
+            AuthenticationProperties authProperties = new ()
+            {
+                IsPersistent = Credential.RememberMe,
+            };
+
+            await HttpContext.SignInAsync(CookieAuth, principal, authProperties);
 
             return RedirectToPage("/index");
         }
 
-        private static List<Claim> getClaims(string name)
+        private static List<Claim> GetClaims(string name)
         {
             List<Claim> claims =  new()
             {
@@ -40,19 +45,18 @@ namespace WebAppUnderTheHood.Pages.Account
 
             if (name == "alex") claims.Add(new Claim("Role", "Admin"));
             if (name == "seb") claims.Add(new Claim("Department", "HR"));
+            if (name == "bob") claims.AddRange(new List<Claim>() {
+                new Claim("Department", "HR"),
+                new Claim("Role", "Admin"),
+                new Claim("EmploymentDate", "2024-11-01")
+            });
+            if (name == "john") claims.AddRange(new List<Claim>() {
+                new Claim("Department", "HR"),
+                new Claim("Role", "Admin"),
+                new Claim("EmploymentDate", "2024-02-01")
+            });
 
             return claims;
         }
-    }
-
-    public class Credential
-    {
-        [Required]
-        [Display(Name = "User Name")]
-        public string Name { get; set; } = string.Empty;
-
-        [Required]
-        [DataType(DataType.Password)]
-        public string Password { get; set; } = string.Empty;
     }
 }

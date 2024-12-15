@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
+using WebAppUnderTheHood.AuthorizationRequirements;
+using WebAppUnderTheHood.AuthorizationRequirements.HRManagerRequirements;
+
 namespace WebAppUnderTheHood
 {
     public class Program
@@ -6,13 +10,12 @@ namespace WebAppUnderTheHood
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
             builder.Services.AddRazorPages();
 
-            //Configuration["FrameworkData:PageTitle"];
             builder.Services.AddAuthentication().AddCookie("MyCookieAuth", options =>
             {
                 options.Cookie.Name = "MyCookieAuth";
+                options.ExpireTimeSpan = TimeSpan.FromSeconds(10);
                 options.LoginPath = "/Account/login";
             });
 
@@ -20,7 +23,14 @@ namespace WebAppUnderTheHood
             {
                 options.AddPolicy("MustBelongToHRDepartment", policy => policy.RequireClaim("Department", "HR"));
                 options.AddPolicy("MustBeAdmin", policy => policy.RequireClaim("Role", "Admin"));
+                options.AddPolicy("MustBeHRManager", policy => policy
+                        .RequireClaim("Department", "HR")
+                        .RequireClaim("Role", "Admin")
+                        .Requirements.Add(new HRManagerProbationRequirement(3)));
             });
+
+            builder.Services.AddSingleton<IAuthorizationHandler, HRManagerProbationRequirementHandler>();
+
 
 
 
