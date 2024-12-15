@@ -17,10 +17,10 @@ namespace WebAppUnderTheHood.Pages.Account
         {
             if (!ModelState.IsValid) return Page();
 
-            bool areCredentialsOk = Credential.Name == "alex" && Credential.Password == "123";
+            bool areCredentialsOk = (Credential.Name == "alex" || Credential.Name == "seb") && Credential.Password == "123";
             if (!areCredentialsOk) return Page();
 
-            List<Claim> claims = getClaims();
+            List<Claim> claims = getClaims(Credential.Name);
 
             ClaimsIdentity identity = new(claims, CookieAuth);
             ClaimsPrincipal principal = new(identity);
@@ -30,13 +30,18 @@ namespace WebAppUnderTheHood.Pages.Account
             return RedirectToPage("/index");
         }
 
-        private static List<Claim> getClaims()
+        private static List<Claim> getClaims(string name)
         {
-            return new()
+            List<Claim> claims =  new()
             {
                 new Claim(ClaimTypes.Name, "admin"),
                 new Claim(ClaimTypes.Email, "alex@test.fr"),
             };
+
+            if (name == "alex") claims.Add(new Claim("Role", "Admin"));
+            if (name == "seb") claims.Add(new Claim("Department", "HR"));
+
+            return claims;
         }
     }
 

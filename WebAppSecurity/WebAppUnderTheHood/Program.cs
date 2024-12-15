@@ -13,6 +13,13 @@ namespace WebAppUnderTheHood
             builder.Services.AddAuthentication().AddCookie("MyCookieAuth", options =>
             {
                 options.Cookie.Name = "MyCookieAuth";
+                options.LoginPath = "/Account/login";
+            });
+
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("MustBelongToHRDepartment", policy => policy.RequireClaim("Department", "HR"));
+                options.AddPolicy("MustBeAdmin", policy => policy.RequireClaim("Role", "Admin"));
             });
 
 
@@ -33,6 +40,7 @@ namespace WebAppUnderTheHood
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapRazorPages();
